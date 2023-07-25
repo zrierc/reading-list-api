@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -noEmit"
+    "typecheck": "tsc -noEmit",
+    "build": "bash build.sh"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.118",
