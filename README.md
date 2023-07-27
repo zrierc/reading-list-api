@@ -653,3 +653,30 @@ You can also [create user via Amazon Cognito console](https://docs.aws.amazon.co
     ```
 
 ---
+
+## Clean Up Resources
+
+This workshop uses AWS services that are mostly covered by the Free Tier allowance - ONLY if your account is less than 12 months old. For accounts passed the free tier eligibility, it may incur some costs. To minimize the cost, make sure you **delete resources used in this workshop when you are finished**.
+
+Follow the sequence according to the steps to delete the AWS resources:
+
+1. Delete HTTP API Gateway via [Amazon API Gateway console](https://console.aws.amazon.com/apigateway).
+
+2. Delete Cognito User Pool via [Amazon Cognito console](https://console.aws.amazon.com/cognito/home).
+
+   > For detail guide, please follow tutorial from [official docs](https://docs.aws.amazon.com/cognito/latest/developerguide/tutorial-cleanup-tutorial.html).
+
+3. Delete following Lambda functions via [AWS Lambda Functions console](https://console.aws.amazon.com/lambda/home#/functions):
+
+   - `preTokenGenerationFn`
+   - `listBookFn`
+   - `saveBookFn`
+   - `getBookFn`
+   - `deleteBookFn`
+
+   > **Note** </br>
+   > You can also delete [custom IAM role for Lambda](#3-create-iam-role-for-lambda) that you've created before via [IAM console](https://console.aws.amazon.com/iamv2/home?#/roles). [Learn more](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_delete.html#roles-managingrole-deleting-console).
+
+4. Delete DynamoDB table via [DynamoDB console](https://console.aws.amazon.com/dynamodb/).
+
+   > Click [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/getting-started-step-8.html) to read more how to delete tables in DynamoDB.
