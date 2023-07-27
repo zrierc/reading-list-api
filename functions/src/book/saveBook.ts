@@ -37,49 +37,81 @@ export async function handler(
     const authPayload = await jwtVerifier.verify(event.headers.authorization!);
     console.info('you are logged in as:', authPayload['cognito:username']);
 
-    // Send data
-    readingListParser(authPayload['cognito:username'], apiPayload).forEach(
-      async book => await saveToDb(book)
+    // manipulate payload
+    const books = readingListParser(
+      authPayload['cognito:username'],
+      apiPayload
     );
+    const newBooks: WriteRequest[] = books.map(book => {
+      return {
+        PutRequest: {
+          Item: {
+            readingID: { S: book.readingID },
+            userID: { S: book.userID },
+            bookTitle: { S: book.bookTitle },
+            bookAuthor: { S: book.bookAuthor },
+            lastUpdated: { N: String(book.lastUpdated) },
+            readingStatus: { S: book.readingStatus! },
+            dateAdded: book.dateAdded
+              ? { N: String(book.dateAdded) }
+              : { NULL: true },
+            lastPageRead: book.lastPageRead
+              ? { S: book.lastPageRead }
+              : { NULL: true },
+            dateFinished: book.dateFinished
+              ? { N: String(book.dateFinished) }
+              : { NULL: true },
+          },
+        },
+      };
+    });
 
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'success' }),
+    // Send data
+    const command = new BatchWriteItemCommand({
+      RequestItems: {
+        [process.env.TABLE_NAME!]: newBooks,
+      },
+    });
+    const response = await client.send(command);
+
+    const body =
+      response.$metadata.httpStatusCode === 200
+        ? { message: 'success.' }
+        : { message: 'failed to add book(s).' };
+
+    return {
+      statusCode: response.$metadata.httpStatusCode,
+      body,
     };
-    return response;
   } catch (err) {
-    console.error(err);
+    console.error('You got an error:', err);
+    return err;
   }
 }
 
-async function saveBatchToDb(books: UserReadingList[]) {
-  const newBooks: WriteRequest[] = books.map(book => {
-    return {
-      PutRequest: {
-        Item: {
-          readingID: { S: book.readingID },
-          userID: { S: book.userID },
-          bookTitle: { S: book.bookTitle },
-          bookAuthor: { S: book.bookAuthor },
-          lastPageRead: { S: book.lastPageRead! },
-          readingStatus: { S: book.readingStatus! },
-          dateAdded: { N: String(book.dateAdded) },
-          lastUpdated: { N: String(book.lastPageRead!) },
-          dateFinished: { N: String(book.dateFinished) },
-        },
-      },
-    };
-  });
+function readingListParser(
+  username: string,
+  readingList: UserReadingList | UserReadingList[]
+): UserReadingList[] {
+  const now = Date.now();
 
-  const command = new BatchWriteItemCommand({
-    RequestItems: {
-      [process.env.TABLE_NAME!]: newBooks,
-    },
-  });
+  // change to array
+  const payload = Array.isArray(readingList) ? readingList : [readingList];
 
-  const response = await client.send(command);
-  console.log(response);
-  return response;
+  // Add default value
+  const addMissingFields = (book: UserReadingList) => {
+    book.readingID = String(uuidv4());
+    book.dateAdded = now;
+    book.lastUpdated = now;
+    book.userID = username;
+    book.dateFinished = null;
+    book.lastPageRead = null;
+    if (!book.readingStatus) book.readingStatus = 'added';
+    if (book.readingStatus === 'finished') book.dateFinished = now;
+  };
+  payload.forEach(addMissingFields);
+
+  return payload;
 }
 
 async function saveToDb(book: UserReadingList) {
@@ -105,25 +137,4 @@ async function saveToDb(book: UserReadingList) {
 
   const response = await dbClient.send(command);
   return response;
-}
-
-function readingListParser(
-  username: string,
-  readingList: UserReadingList | UserReadingList[]
-): UserReadingList[] {
-  const payload = Array.isArray(readingList) ? readingList : [readingList];
-  const now = Date.now();
-  const addMissingFields = (book: UserReadingList) => {
-    if (!book.userID) book.userID = username;
-    if (!book.readingID) book.readingID = String(uuidv4());
-    if (!book.dateAdded) book.dateAdded = now;
-    if (!book.readingStatus) book.readingStatus = 'added';
-    if (!book.dateFinished) book.dateFinished = null;
-    if (!book.lastPageRead) book.lastPageRead = null;
-    if (book.readingStatus === 'finished') book.dateFinished = now;
-    book.lastUpdated = now;
-  };
-
-  payload.forEach(addMissingFields);
-  return payload;
 }
