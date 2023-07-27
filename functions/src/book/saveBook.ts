@@ -1,4 +1,9 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+  BatchWriteItemCommand,
+  DynamoDBClient,
+  PutRequest,
+  WriteRequest,
+} from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEventV2WithJWTAuthorizer, Context } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
@@ -45,6 +50,36 @@ export async function handler(
   } catch (err) {
     console.error(err);
   }
+}
+
+async function saveBatchToDb(books: UserReadingList[]) {
+  const newBooks: WriteRequest[] = books.map(book => {
+    return {
+      PutRequest: {
+        Item: {
+          readingID: { S: book.readingID },
+          userID: { S: book.userID },
+          bookTitle: { S: book.bookTitle },
+          bookAuthor: { S: book.bookAuthor },
+          lastPageRead: { S: book.lastPageRead! },
+          readingStatus: { S: book.readingStatus! },
+          dateAdded: { N: String(book.dateAdded) },
+          lastUpdated: { N: String(book.lastPageRead!) },
+          dateFinished: { N: String(book.dateFinished) },
+        },
+      },
+    };
+  });
+
+  const command = new BatchWriteItemCommand({
+    RequestItems: {
+      [process.env.TABLE_NAME!]: newBooks,
+    },
+  });
+
+  const response = await client.send(command);
+  console.log(response);
+  return response;
 }
 
 async function saveToDb(book: UserReadingList) {
