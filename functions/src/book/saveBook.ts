@@ -72,17 +72,19 @@ export async function handler(
         [process.env.TABLE_NAME!]: newBooks,
       },
     });
-    const response = await client.send(command);
+    const sendData = await client.send(command);
 
-    const body =
-      response.$metadata.httpStatusCode === 200
-        ? { message: 'success.' }
-        : { message: 'failed to add book(s).' };
-
-    return {
-      statusCode: response.$metadata.httpStatusCode,
-      body,
+    // return response
+    const response = {
+      statusCode: sendData.$metadata.httpStatusCode,
+      body: JSON.stringify({
+        message:
+          sendData.$metadata.httpStatusCode === 200
+            ? 'success'
+            : 'failed to add books',
+      }),
     };
+    return response;
   } catch (err) {
     console.error('You got an error:', err);
     return err;
