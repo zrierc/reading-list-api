@@ -9,7 +9,7 @@
   - [Lambda](#lambda)
   - [API Gateway](#api-gateway)
   - [Cognito](#cognito)
-- [Testing](#🧪-testing)
+- [Testing](#-testing)
 - [Clean Up Resources](#clean-up-resources)
 
 ---
@@ -397,3 +397,259 @@ ii. Publish [functions code](#1-build-code) that you already build before.
 ---
 
 ## 🧪 Testing
+
+### Step 1: Create Cognito user.
+
+You can create via AWS CLI:
+
+- Create user
+
+  ```bash
+  aws cognito-idp sign-up \
+    --client-id <cognito_app_client_id_of_userpool> \
+    --username <your_username> \
+    --user-attributes Name=email,Value=<your_mail> \
+    --password <your_password>
+  ```
+
+- Verify user
+
+  ```bash
+   aws cognito-idp admin-confirm-sign-up \
+   --user-pool-id <your_cognito_userpool_id> \
+    --username <your_username>
+  ```
+
+You can also [create user via Amazon Cognito console](https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html#creating-a-new-user-using-the-users-tab). If you enable hosted UI when setup Cognito, you can [create user via hosted UI](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-hosted-ui-user-sign-up.html).
+
+### Step 2: Test API
+
+> 🧪⚠ Scenario
+>
+> For testing, you're going to do 3 scenarios:
+>
+> 1. Using random string as authorization token and without using authorization token — which will make the requests failed
+> 2. Using JWT token from Amazon Cognito which will led to successful request
+> 3. Test all API endpoint
+
+1.  First scenario:
+
+    - Open terminal
+
+    - Execute following commands:
+
+      without authorization token
+
+      ```bash
+      curl https://<your-http-api-gateway-endpoint>/book
+      ```
+
+      with random string as authorization token
+
+      ```bash
+      curl -H "Authorization: MY-RANDOM-STRING" https://<your-http-api-gateway-endpoint>/book
+      ```
+
+    - If you see the following response, then your cognito JWT authorizer works correctly
+
+      ```json
+      { "message": "Unauthorized" }
+      ```
+
+2.  Second scenario:
+
+    - Open terminal
+
+    - Get JWT token from Cognito using AWS CLI
+
+      ```bash
+      aws cognito-idp initiate-auth \
+        --auth-flow USER_PASSWORD_AUTH \
+        --client-id <cognito_app_client_id_of_userpool> \
+        --auth-parameters USERNAME=<your-username>,PASSWORD='<your-password>'
+      ```
+
+      If you see the following response, copy token from `IdToken`
+
+      ```json
+      {
+        "ChallengeParameters": {},
+        "AuthenticationResult": {
+          "AccessToken": "a1b2c3d4e5c644444555556666Y2X3Z1111",
+          "ExpiresIn": 3600,
+          "TokenType": "Bearer",
+          "RefreshToken": "xyz654cba321dddccc1111",
+          "IdToken": "a1b2c3d4e5c6aabbbcccddd"
+        }
+      }
+      ```
+
+3.  Test `GET /book` endpoint to **list all books**
+
+    Execute the following command:
+
+    ```bash
+    curl -H 'Authorization: <paste-your-IdToken>' \
+    https://<your-http-api-gateway-endpoint>/book
+    ```
+
+    If you see the following response, then it works correctly
+
+    ```json
+    { "data": [] }
+    ```
+
+4.  Test `POST /book` endpoint to **add new books**
+
+    Sample data (single):
+
+    ```json
+    {
+      "bookTitle": "Cosmos",
+      "bookAuthor": "Carl Sagan"
+    }
+    ```
+
+    Sample multiple data:
+
+    ```json
+    [
+      {
+        "bookTitle": "Chainsaw Man, Vol. 1",
+        "bookAuthor": "Tatsuki Fujimoto"
+      },
+      {
+        "bookTitle": "Chainsaw Man, Vol. 2",
+        "bookAuthor": "Tatsuki Fujimoto"
+      },
+      {
+        "bookTitle": "Chainsaw Man, Vol. 3",
+        "bookAuthor": "Tatsuki Fujimoto"
+      }
+    ]
+    ```
+
+    Execute the following commands:
+
+    Send data (single)
+
+    ```bash
+    curl -X POST \
+      https://<your-http-api-gateway-endpoint>/book \
+      -H 'Authorization: <paste-your-IdToken>' \
+      -H 'Content-Type: application/json' \
+      -d '{"bookTitle": "Cosmos", "bookAuthor": "Carl Sagan"}'
+    ```
+
+    Send multiple data
+
+    ```bash
+    curl -X POST \
+      https://<your-http-api-gateway-endpoint>/book \
+      -H 'Authorization: <paste-your-IdToken>' \
+      -H 'Content-Type: application/json' \
+      -d '[{"bookTitle":"Chainsaw Man, Vol. 1","bookAuthor":"Tatsuki Fujimoto"},{"bookTitle":"Chainsaw Man, Vol. 2","bookAuthor":"Tatsuki Fujimoto"},{"bookTitle":"Chainsaw Man, Vol. 3","bookAuthor":"Tatsuki Fujimoto"}]'
+    ```
+
+    If you see the following response, then it works correctly
+
+    ```json
+    { "message": "success" }
+    ```
+
+5.  Test `GET /book/{id}` endpoint to **get detail book**
+
+    Get current book that available
+
+    ```bash
+    curl -H 'Authorization: <paste-your-IdToken>' \
+    https://<your-http-api-gateway-endpoint>/book
+    ```
+
+    If you see the following response, copy id from `readingID`
+
+    > **Note** </br> `readingID` may be different value than the example. **Adjust the id with your output**.
+
+    ```json
+    {
+      "data": [
+        {
+          "readingID": "abcd1234-ab12-cd23-ef45-abcdef123456",
+          "userID": "john",
+          "bookTitle": "Cosmos",
+          "bookAuthor": "Carl Sagan",
+          ...
+        },
+        ...
+      ]
+    }
+    ```
+
+    Get detail book:
+
+    ```bash
+    curl -X GET \
+      https://<your-http-api-gateway-endpoint>/book/<readingID> \
+      -H 'Authorization: <paste-your-IdToken>'
+    ```
+
+    If you see the following response, then it works correctly
+
+    ```json
+    {
+      "readingID": "abcd1234-ab12-cd23-ef45-abcdef123456",
+      "userID": "john",
+      "bookTitle": "Cosmos",
+      "bookAuthor": "Carl Sagan",
+      "dateAdded": 1690370601856,
+      "readingStatus": "added",
+      "lastUpdated": 1690370601856,
+      "lastPageRead": null
+      "dateFinished": null,
+    }
+    ```
+
+6.  Test `DELETE /book/{id}` endpoint to **delete book**
+
+    Get current book that available
+
+    ```bash
+    curl -H 'Authorization: <paste-your-IdToken>' \
+    https://<your-http-api-gateway-endpoint>/book
+    ```
+
+    If you see the following response, copy id from `readingID`
+
+    > **Note** </br> `readingID` may be different value than the example. **Adjust the id with your output**.
+
+    ```json
+    {
+      "data": [
+        {
+          "readingID": "abcd1234-ab12-cd23-ef45-abcdef123456",
+          "userID": "john",
+          "bookTitle": "Cosmos",
+          "bookAuthor": "Carl Sagan",
+          ...
+        },
+        ...
+      ]
+    }
+    ```
+
+    Delete book
+
+    ```bash
+    curl -X DELETE \
+      https://<your-http-api-gateway-endpoint>/book/<readingID> \
+      -H 'Authorization: <paste-your-IdToken>' \
+      -H 'Content-Type: application/json'
+    ```
+
+    If you see the following response, then it works correctly
+
+    ```json
+    { "message": "success" }
+    ```
+
+---
