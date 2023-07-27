@@ -1,6 +1,6 @@
-export type UserReadingStatus = 'added' | 'on-going' | 'pause' | 'finished';
+type UserReadingStatus = 'added' | 'on-going' | 'pause' | 'finished';
 
-export interface UserReadingList {
+interface UserReadingList {
   readingID: string;
   userID: string;
   bookTitle: string;
@@ -11,3 +11,5 @@ export interface UserReadingList {
   lastUpdated?: number;
   dateFinished: number | null;
 }
+
+export { UserReadingList };
