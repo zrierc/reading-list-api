@@ -66,7 +66,8 @@ Some of the services from AWS that are used in this mini workshop are as follows
 
 ## Setup Environment
 
-> **Note** </br>
+> **💡 TIP**
+>
 > If the settings/configurations are not specified in this guide, you can leave them as default or you can specify the values with your own.
 
 ### DynamoDB
@@ -131,7 +132,11 @@ Some of the services from AWS that are used in this mini workshop are as follows
 
 #### 1. Build Code
 
-- Clone this repository
+- Clone [this repository](https://github.com/zrierc/reading-list-api)
+
+  ```bash
+  git clone https://github.com/zrierc/reading-list-api.git
+  ```
 
 - Navigate to [`functions/`](/functions/)
 
