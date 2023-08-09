@@ -324,6 +324,29 @@ ii. Publish [functions code](#1-build-code) that you already build before.
     --zip-file fileb://functions.zip
   ```
 
+#### 😕 Are you stuck?
+
+Check this common issues:
+
+<details>
+  <summary>❌ Failed running build command</summary>
+
+- Make sure npm or yarn already installed on your machine.
+- Make sure zip and unzip already installed on your machine. Click [here](https://www.tecmint.com/install-zip-and-unzip-in-linux/) to read guide how to install zip and unzip in Linux machine.
+- Make sure your machine support Linux/Unix commands to run build script. For Windows user, you can try to install [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) to run Linux on your Windows machine OR you can create custom build script using powershell/cmd. Don't forget to change `build` script command inside `package.json`.
+</details>
+
+<details>
+  <summary>⚠ Error when publish code to Lambda using AWS CLI</summary>
+
+- Make sure you code already built and `function.zip` in the same directory as `functions/` exists.
+- Make sure you already installed AWS CLI on your machine. Click [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions) to read more about how to install the AWS CLI.
+- Setup IAM credentials for authentication AWS CLI. Click [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html) to read more about how to setup credentials.
+  > **Note** </br>
+  > Make sure your IAM credentials for AWS CLI has `AWSLambda_FullAccess` policy.
+
+</details>
+
 ### API Gateway
 
 1. Select AWS region.
