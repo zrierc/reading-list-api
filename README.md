@@ -585,6 +585,11 @@ You can also [create user via Amazon Cognito console](https://docs.aws.amazon.co
     { "message": "success" }
     ```
 
+    > **💡 TIP**
+    >
+    > To make sure data already stored on database, you can check the data that you sent in DynamoDB Console. [Learn more](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/getting-started-step-3.html). </br>
+    > If successful, the data that you sent before will exist in the DynamoDB table as items.
+
 5.  Test `GET /book/{id}` endpoint to **get detail book**
 
     Get current book that available
@@ -679,6 +684,11 @@ You can also [create user via Amazon Cognito console](https://docs.aws.amazon.co
     ```json
     { "message": "success" }
     ```
+
+    > **💡 TIP**
+    >
+    > To make sure data already deleted on database, you can check the data that you sent in DynamoDB Console. [Learn more](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/getting-started-step-3.html). </br>
+    > If successful, the data you deleted before will no longer exist in the DynamoDB table.
 
 ---
 
